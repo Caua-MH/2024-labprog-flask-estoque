@@ -8,14 +8,13 @@ from flask import Flask, render_template
 from flask_login import user_logged_in
 
 import src.routes.auth
-from src.models.produto import Produto
 from src.models.categoria import Categoria
 from src.models.usuario import User
 from src.modules import bootstrap, csrf, db, login, mail, minify
 from src.utils import as_localtime, existe_esquema, timestamp
 
 
-def create_app(config_filename: str = 'config.dev.json') -> Flask:
+def create_app(config_filename: str = 'config.dev.json', categorias=None) -> Flask:
     # Desativar as mensagens do servidor HTTP
     # https://stackoverflow.com/a/18379764
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
@@ -82,6 +81,15 @@ def create_app(config_filename: str = 'config.dev.json') -> Flask:
             app.logger.critical("É necessário fazer a migração/upgrade do banco")
             sys.exit(1)
 
+        if Categoria.is_empty():
+            categorias = ["Bebidas", "Carnes", "Padaria", "Laticínios", "Hortifruti"]
+            for c in categorias:
+                categoria = Categoria()
+                categoria.nome = c
+                db.session.add(categoria)
+            db.session.commit()
+
+
         if User.is_empty():
             usuarios = [
                 dict(nome="Administrador",
@@ -105,20 +113,6 @@ def create_app(config_filename: str = 'config.dev.json') -> Flask:
                 novo_usuario.ativo = usuario.get('ativo')
                 novo_usuario.dta_validacao_email = timestamp()
                 db.session.add(novo_usuario)
-                db.session.commit()
-
-        if Categoria.is_empty():
-            from src.models.seed import seed_data
-            for item in seed_data:
-                categoria = Categoria()
-                categoria.nome = item["categoria"]
-                db.session.add(categoria)
-                for p in item["produtos"]:
-                    produto = Produto()
-                    produto.nome = p["nome"]
-                    produto.preco = p["preco"]
-                    produto.categoria = categoria
-                    db.session.add(produto)
                 db.session.commit()
 
     @app.route('/')
