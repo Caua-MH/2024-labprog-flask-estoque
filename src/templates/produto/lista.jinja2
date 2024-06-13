@@ -19,10 +19,12 @@
             <td>{% if produto.ativo %}Ativo{% else %}Inativo{% endif %} </td>
             <td class="text-end">{{ produto.preco }}</td>
             <td>{{ produto.categoria.nome }}</td>
-            <td><a href="#" onclick="return confirm('Confirma a remoção do produto?')">
+            <td class="text-center">
+                <a href="{{ url_for('produto.edit', produto_id = produto.id) }}"
+                >{{ render_icon('pencil-square', color='primary', size='1.25rem' ) }}</a>
+                <a href="#" onclick="return confirm('Confirma a remoção do produto?')">
                 {{ render_icon ('trash', color= 'danger') }}</a>
-                <a href="#">
-                    {{ render_icon('check-square') }}</a></td></tr>
+                </td></tr>
         </tr>
 
     {% endfor %}
