@@ -24,8 +24,8 @@ def novo():
     form.categoria.choices = [(str(i.id), i.nome) for i in categorias]
 
     if form.validate_on_submit():
-        produto = Produto(nome = form.nome.data, preco = form.preco.data,
-                          ativo = form.ativo.data, estoque = form.estoque.data)
+        produto = Produto(nome=form.nome.data, preco=form.preco.data,
+                          ativo=form.ativo.data, estoque=form.estoque.data)
         if form.foto.data:
             produto.possui_foto = True
             produto.foto_base64 = (b64encode(request.files[form.foto.name].read()).
@@ -45,7 +45,7 @@ def novo():
         flash("Produto adicionado!")
         return redirect(url_for('index'))
 
-    return render_template('produto/add_edit.jinja2', form=form,
+    return render_template('produto/add.jinja2', form=form,
                            title="Adicionar novo produto")
 
 @bp.route('/edit/<uuid:produto_id>', methods=['GET', 'POST'])
@@ -65,6 +65,20 @@ def edit(produto_id):
         produto.estoque = form.estoque.data
         produto.ativo = form.ativo.data
         categoria = Categoria.get_by_id(form.categoria.data)
+        if form.removerfoto.data:
+            produto.possui_foto = False
+            produto.foto_mime = None
+            produto.foto_base64 = None
+        elif form.foto.data:
+            produto.possui_foto = True
+            produto.foto_base64 = (b64encode(request.files[form.foto.name].read()).
+                                   decode('ascii'))
+            produto.foto_mime = request.files[form.foto.name].mimetype
+        if form.foto.data:
+            produto.possui_foto = True
+            produto.foto_base64 = (b64encode(request.files[form.foto.name].read()).
+                                   decode('ascii'))
+            produto.foto_mime = request.files[form.foto.name].mimetype
         if categoria is None:
             flash("Categoria inexistente!", category='danger')
             return redirect(url_for('produto.lista'))
@@ -73,16 +87,25 @@ def edit(produto_id):
         return redirect(url_for('produto.listar'))
 
     form.categoria.process_data(str(produto.categoria_id))
-    return render_template('produto/add_edit.jinja2', form=form, title="Alterar Produto")
+    return render_template('produto/edit.jinja2', form=form, title="Alterar Produto", produto=produto)
 
 
-@bp.route('/image/<uuid:id_produto>', methods=['GET'])
+@bp.route('/imagem/<uuid:id_produto>', methods=['GET'])
 def imagem(id_produto):
     produto = Produto.get_by_id(id_produto)
     if produto is None:
         return abort(404)
     conteudo, tipo = produto.imagem
-    return Response(conteudo, minetype=tipo)
+    return Response(conteudo, mimetype=tipo)
+
+@bp.route('/thumbnail/<uuid:id_produto>/<int:size>', methods=['GET'])
+@bp.route('/thumbnail/<uuid:id_produto>', methods=['GET'])
+def thumbnail(id_produto, size=128):
+    produto = Produto.get_by_id(id_produto)
+    if produto is None:
+        return abort(404)
+    conteudo, tipo = produto.thumbnail(size)
+    return Response(conteudo, mimetype=tipo)
 
 @bp.route('/lista', methods=['GET', 'POST'])
 @bp.route('/', methods=['GET', 'POST'])
@@ -91,14 +114,3 @@ def listar():
     rset = db.session.execute(sentence).scalars()
 
     return render_template('produto/lista.jinja2', title='Lista de produtos', rset=rset)
-
-@bp.route('/thumbnail/<uuid:id_produto>/<int:size>', methods=['GET'])
-@bp.route('/thumbnail/<uuid:id_produto>', methods=['GET'])
-def thumbnail(id_produto, size=128):
-    produto = Produto.get_by_id(id_produto)
-    if produto is None:
-        return abort(404)
-    conteudo, tipo = produto.thumnail(size)
-    return Response(conteudo, minetype=tipo)
-
-
