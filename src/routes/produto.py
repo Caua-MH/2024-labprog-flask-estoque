@@ -2,6 +2,7 @@ from base64 import b64encode
 
 from flask import Blueprint, flash, redirect, url_for, render_template, request, Response, abort
 from flask_login import login_required
+from werkzeug.exceptions import NotFound
 
 from src.forms.produto import ProdutoForm
 from src.models.categoria import Categoria
@@ -49,6 +50,7 @@ def novo():
                            title="Adicionar novo produto")
 
 @bp.route('/edit/<uuid:produto_id>', methods=['GET', 'POST'])
+@login_required
 def edit(produto_id):
     produto = Produto.get_by_id(produto_id)
     if produto is None:
@@ -89,6 +91,18 @@ def edit(produto_id):
     form.categoria.process_data(str(produto.categoria_id))
     return render_template('produto/edit.jinja2', form=form, title="Alterar Produto", produto=produto)
 
+@bp.route('/delete/<uuid:produto_id>', methods=["GET"])
+@login_required
+def delete(produto_id):
+    produto = Produto.get_by_id(produto_id)
+    if produto is None:
+        flash("Produto inexistente", category='danger')
+        return redirect(url_for('produto.lista'))
+
+    db.session.delete(produto)
+    db.session.commit()
+    flash("Produto removido!", category='danger')
+    return redirect(url_for('produto.listar'))
 
 @bp.route('/imagem/<uuid:id_produto>', methods=['GET'])
 def imagem(id_produto):
@@ -110,7 +124,16 @@ def thumbnail(id_produto, size=128):
 @bp.route('/lista', methods=['GET', 'POST'])
 @bp.route('/', methods=['GET', 'POST'])
 def listar():
-    sentence =  db.select(Produto).order_by(Produto.nome)
-    rset = db.session.execute(sentence).scalars()
+    page = request.args.get('page', type=int, default=1)
+    pp = request.args.get('pp', type=int, default=25)
 
-    return render_template('produto/lista.jinja2', title='Lista de produtos', rset=rset)
+    sentence = db.select(Produto).order_by(Produto.nome)
+
+    try:
+        rset = db.paginate(sentence, page=page, per_page=pp, error_out=True)
+    except NotFound:
+        flash(f"Não temos produtos na página {page}. Apresentando página 1")
+        page = 1
+        rset = db.paginate(sentence, page=page, per_page=pp, error_out=False)
+
+    return render_template('produto/lista.jinja2', title="Lista de produtos", rset=rset, page=page, pp=pp)
