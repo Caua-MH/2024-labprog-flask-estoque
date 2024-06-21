@@ -1,8 +1,24 @@
 {% extends '_layout.jinja2' %}
 {% from 'bootstrap5/utils.html' import render_icon %}
+{% from 'utils/menus.jinja2' import linhas_por_pagina, nome_parcial with context%}
 {% from 'bootstrap5/pagination.html' import render_pagination %}
 
 {% block content %}
+     <div class="row justify-content-center">
+        <div class="clearfix mb-4 align-items-center">
+            <form action="{{ url_for('produto.listar') }}" method="GET">
+                <div class="float-start small">
+                    <div class="hstack gap-3">
+                        {{ linhas_por_pagina(pp) }}
+                        {{ nome_parcial(q) }}
+                    </div>
+                </div>
+                <div class="float-end">
+                    <button type="submit" class="btn btn-secondary">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <div class="row">
         <table class="table table-striped table-hover">
         <thead><tr>
@@ -38,7 +54,7 @@
                 Mostrando itens {{ rset.first }} a {{ rset.last }} de um total de {{ rset.total }}
             </div>
             <div class="float-end">
-                {{ render_pagination(rset, 'produto.listar',  align='right', size='sm', args={'pp': pp}) }}
+                {{ render_pagination(rset, 'produto.listar',  align='right', size='sm', args={'pp': pp, 'q': q}) }}
             </div>
         </div>
     </div>

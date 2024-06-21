@@ -126,8 +126,12 @@ def thumbnail(id_produto, size=128):
 def listar():
     page = request.args.get('page', type=int, default=1)
     pp = request.args.get('pp', type=int, default=25)
+    q = request.args.get('q', type=str, default="")
 
     sentence = db.select(Produto).order_by(Produto.nome)
+
+    if q != "":
+        sentence = sentence.filter(Produto.nome.ilike(f"%{q}%"))
 
     try:
         rset = db.paginate(sentence, page=page, per_page=pp, error_out=True)
@@ -136,4 +140,4 @@ def listar():
         page = 1
         rset = db.paginate(sentence, page=page, per_page=pp, error_out=False)
 
-    return render_template('produto/lista.jinja2', title="Lista de produtos", rset=rset, page=page, pp=pp)
+    return render_template('produto/lista.jinja2', title="Lista de produtos", rset=rset, page=page, pp=pp, q=q)
