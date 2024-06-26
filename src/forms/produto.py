@@ -17,6 +17,9 @@ class ProdutoForm(FlaskForm):
     estoque = IntegerField(label="Estoque",
                            validators=[DataRequired(message="É preciso definir o estoque"),
                                        NumberRange(min=0, message="O estoque precisa ser positivo")])
+    estoque_critico = IntegerField(label="Estoque Critico",
+                                   validators=[DataRequired(message="É preciso definir o estoque critico"),
+                                       NumberRange(min=0, message="O estoque critico precisa ser positivo")])
     ativo = BooleanField(label="Ativo?")
     foto = FileField(label="Foto do produto",
                      validators=[FileAllowed(['jpg', 'png'], message = "Apenas arquivos JPG ou PNG")])

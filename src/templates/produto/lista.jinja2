@@ -6,7 +6,7 @@
 {% block content %}
      <div class="row justify-content-center">
         <div class="clearfix mb-4 align-items-center">
-            <form action="{{ url_for('produto.listar') }}" method="GET">
+            <form action="{{ url_for('produto.lista') }}" method="GET">
                 <div class="float-start small">
                     <div class="hstack gap-3">
                         {{ linhas_por_pagina(pp) }}
@@ -32,7 +32,9 @@
         <tbody>
         {% for produto in rset %}
             <tr><td>{{ produto.nome }}</td>
-                <td class="text-end">{{ produto.estoque }}</td>
+                <td class="text-end">{% if produto.estoque < produto.estoque_critico %}
+                    Estoque critico{{ render_icon ('exclamation', color= 'danger', size='1.75rem')}}{{produto.estoque}}
+                {% else %}{{produto.estoque}}{% endif %}</td>
                 <td>{% if produto.ativo %}Ativo{% else %}Inativo{% endif %} </td>
                 <td class="text-end">{{ produto.preco }}</td>
                 <td>{{ produto.categoria.nome }}</td>
@@ -54,7 +56,7 @@
                 Mostrando itens {{ rset.first }} a {{ rset.last }} de um total de {{ rset.total }}
             </div>
             <div class="float-end">
-                {{ render_pagination(rset, 'produto.listar',  align='right', size='sm', args={'pp': pp, 'q': q}) }}
+                {{ render_pagination(rset, 'produto.lista',  align='right', size='sm', args={'pp': pp, 'q': q}) }}
             </div>
         </div>
     </div>

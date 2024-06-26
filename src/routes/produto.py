@@ -26,7 +26,8 @@ def novo():
 
     if form.validate_on_submit():
         produto = Produto(nome=form.nome.data, preco=form.preco.data,
-                          ativo=form.ativo.data, estoque=form.estoque.data)
+                          ativo=form.ativo.data, estoque=form.estoque.data,
+                          estoque_critico=form.estoque_critico.data)
         if form.foto.data:
             produto.possui_foto = True
             produto.foto_base64 = (b64encode(request.files[form.foto.name].read()).
@@ -66,6 +67,7 @@ def edit(produto_id):
         produto.preco = form.preco.data
         produto.estoque = form.estoque.data
         produto.ativo = form.ativo.data
+        produto.estoque_critico = form.estoque_critico.data
         categoria = Categoria.get_by_id(form.categoria.data)
         if form.removerfoto.data:
             produto.possui_foto = False
@@ -86,7 +88,7 @@ def edit(produto_id):
             return redirect(url_for('produto.lista'))
         produto.categoria = categoria
         db.session.commit()
-        return redirect(url_for('produto.listar'))
+        return redirect(url_for('produto.lista'))
 
     form.categoria.process_data(str(produto.categoria_id))
     return render_template('produto/edit.jinja2', form=form, title="Alterar Produto", produto=produto)
@@ -102,7 +104,7 @@ def delete(produto_id):
     db.session.delete(produto)
     db.session.commit()
     flash("Produto removido!", category='danger')
-    return redirect(url_for('produto.listar'))
+    return redirect(url_for('produto.lista'))
 
 @bp.route('/imagem/<uuid:id_produto>', methods=['GET'])
 def imagem(id_produto):
@@ -123,7 +125,7 @@ def thumbnail(id_produto, size=128):
 
 @bp.route('/lista', methods=['GET', 'POST'])
 @bp.route('/', methods=['GET', 'POST'])
-def listar():
+def lista():
     page = request.args.get('page', type=int, default=1)
     pp = request.args.get('pp', type=int, default=25)
     q = request.args.get('q', type=str, default="")
